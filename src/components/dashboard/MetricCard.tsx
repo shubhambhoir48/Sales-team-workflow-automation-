@@ -7,9 +7,10 @@ interface MetricCardProps {
   change: number;
   icon: LucideIcon;
   variant?: "default" | "primary" | "success" | "warning";
+  loading?: boolean;
 }
 
-export function MetricCard({ title, value, change, icon: Icon, variant = "default" }: MetricCardProps) {
+export function MetricCard({ title, value, change, icon: Icon, variant = "default", loading }: MetricCardProps) {
   const isPositive = change >= 0;
 
   const iconVariants = {

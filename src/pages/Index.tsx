@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DollarSign, Users, Target, TrendingUp } from "lucide-react";
+import { IndianRupee, Users, Target, TrendingUp } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { MetricCard } from "@/components/dashboard/MetricCard";
@@ -15,9 +15,12 @@ import { TargetsView } from "@/components/targets/TargetsView";
 import { AutomationView } from "@/components/automation/AutomationView";
 import { AnalyticsView } from "@/components/analytics/AnalyticsView";
 import { SettingsView } from "@/components/settings/SettingsView";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { formatINRCompact } from "@/lib/indian-market";
 
 const headerConfig: Record<string, { title: string; subtitle: string }> = {
-  dashboard: { title: "Dashboard", subtitle: "Welcome back, John" },
+  dashboard: { title: "Dashboard", subtitle: "" },
   pipeline: { title: "Sales Pipeline", subtitle: "Manage your opportunities" },
   team: { title: "Team Performance", subtitle: "Track your team's progress" },
   scheduler: { title: "Schedule", subtitle: "Manage meetings and calls" },
@@ -30,7 +33,13 @@ const headerConfig: Record<string, { title: string; subtitle: string }> = {
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const { title, subtitle } = headerConfig[activeTab] || headerConfig.dashboard;
+  const { profile } = useOrganization();
+  const { stats, loading } = useDashboardStats();
+  
+  const headerInfo = headerConfig[activeTab] || headerConfig.dashboard;
+  const subtitle = activeTab === "dashboard" 
+    ? `Welcome back, ${profile?.full_name?.split(' ')[0] || 'User'}`
+    : headerInfo.subtitle;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -54,40 +63,44 @@ export default function Index() {
         return (
           <div className="p-6">
             {/* Metrics Row */}
-            <div className="mb-6 grid grid-cols-4 gap-4">
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard
-                title="Total Revenue"
-                value="$1.25M"
-                change={12.5}
-                icon={DollarSign}
+                title="Total Pipeline"
+                value={formatINRCompact(stats.totalPipeline)}
+                change={stats.pipelineChange}
+                icon={IndianRupee}
                 variant="primary"
+                loading={loading}
               />
               <MetricCard
                 title="Active Deals"
-                value="45"
-                change={8.2}
+                value={stats.activeDeals.toString()}
+                change={stats.dealsChange}
                 icon={Target}
                 variant="success"
+                loading={loading}
               />
               <MetricCard
                 title="Team Members"
-                value="12"
+                value={stats.teamMembers.toString()}
                 change={0}
                 icon={Users}
                 variant="default"
+                loading={loading}
               />
               <MetricCard
                 title="Win Rate"
-                value="32%"
-                change={5.1}
+                value={`${stats.winRate}%`}
+                change={stats.winRateChange}
                 icon={TrendingUp}
                 variant="warning"
+                loading={loading}
               />
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-3 gap-6">
-              <div className="col-span-2 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
                 <PipelineChart />
                 <RecentDeals />
               </div>
@@ -104,8 +117,8 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <main className="ml-64">
-        <Header title={title} subtitle={subtitle} />
+      <main className="ml-0 lg:ml-64">
+        <Header title={headerInfo.title} subtitle={subtitle} />
         {renderContent()}
       </main>
     </div>
